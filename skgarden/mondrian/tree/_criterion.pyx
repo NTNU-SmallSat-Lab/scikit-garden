@@ -53,7 +53,7 @@ cdef class Criterion:
 
     cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
+                  SIZE_t end) except -1 nogil:
         """Placeholder for a method which will initialize the criterion.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -82,7 +82,7 @@ cdef class Criterion:
 
         pass
 
-    cdef int reset(self) nogil except -1:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
         This method must be implemented by the subclass.
@@ -90,14 +90,14 @@ cdef class Criterion:
 
         pass
 
-    cdef int reverse_reset(self) nogil except -1:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end.
 
         This method must be implemented by the subclass.
         """
         pass
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
+    cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left child.
 
         This updates the collected statistics by moving samples[pos:new_pos]
@@ -281,7 +281,7 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
+                  SIZE_t end) except -1 nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -323,7 +323,7 @@ cdef class RegressionCriterion(Criterion):
         self.reset()
         return 0
 
-    cdef int reset(self) nogil except -1:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
         memset(self.sum_left, 0, n_bytes)
@@ -334,7 +334,7 @@ cdef class RegressionCriterion(Criterion):
         self.pos = self.start
         return 0
 
-    cdef int reverse_reset(self) nogil except -1:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
         memset(self.sum_right, 0, n_bytes)
@@ -345,7 +345,7 @@ cdef class RegressionCriterion(Criterion):
         self.pos = self.end
         return 0
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
+    cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
 
         cdef double* sum_left = self.sum_left
@@ -597,7 +597,7 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef int init(self, DOUBLE_t* y, SIZE_t y_stride,
                   DOUBLE_t* sample_weight, double weighted_n_samples,
-                  SIZE_t* samples, SIZE_t start, SIZE_t end) nogil except -1:
+                  SIZE_t* samples, SIZE_t start, SIZE_t end) except -1 nogil:
         """Initialize the criterion at node samples[start:end] and
         children samples[start:start] and samples[start:end].
 
@@ -666,7 +666,7 @@ cdef class ClassificationCriterion(Criterion):
         self.reset()
         return 0
 
-    cdef int reset(self) nogil except -1:
+    cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -693,7 +693,7 @@ cdef class ClassificationCriterion(Criterion):
             sum_right += self.sum_stride
         return 0
 
-    cdef int reverse_reset(self) nogil except -1:
+    cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -720,7 +720,7 @@ cdef class ClassificationCriterion(Criterion):
             sum_right += self.sum_stride
         return 0
 
-    cdef int update(self, SIZE_t new_pos) nogil except -1:
+    cdef int update(self, SIZE_t new_pos) except -1 nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left child.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
