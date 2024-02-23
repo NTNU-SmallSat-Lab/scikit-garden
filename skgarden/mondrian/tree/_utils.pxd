@@ -10,7 +10,7 @@
 
 import numpy as np
 cimport numpy as np
-from _tree cimport Node
+from ._tree cimport Node
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
@@ -41,7 +41,7 @@ ctypedef fused realloc_ptr:
     (Node**)
     (StackRecord*)
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except * nogil
 
 
 cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
@@ -83,5 +83,5 @@ cdef class Stack:
     cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
-                  SIZE_t n_constant_features) nogil except -1
+                  SIZE_t n_constant_features) except -1 nogil
     cdef int pop(self, StackRecord* res) nogil
