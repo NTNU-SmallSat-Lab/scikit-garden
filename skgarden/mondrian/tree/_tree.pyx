@@ -46,6 +46,9 @@ cdef extern from "numpy/arrayobject.h":
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
 
+cdef extern from "numpy/arrayobject.h":
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject *obj) except -1
+
 # =============================================================================
 # Types and constants
 # =============================================================================
@@ -145,7 +148,7 @@ cdef class PartialFitTreeBuilder(TreeBuilder):
         # Allocate memory for tree.
         cdef int init_capacity
         if tree.max_depth <= 10:
-            init_capacity = (2 ** (tree.max_depth + 1)) - 1
+            init_capacity = (2 ** (int(tree.max_depth) + 1)) - 1
             tree._resize(init_capacity)
 
         cdef np.ndarray X_ndarray = X
@@ -196,7 +199,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         # Initial capacity
         cdef int init_capacity
         if tree.max_depth <= 10:
-            init_capacity = (2 ** (tree.max_depth + 1)) - 1
+            init_capacity = (2 ** (int(tree.max_depth) + 1)) - 1
         else:
             init_capacity = 2047
         tree._resize(init_capacity)
@@ -503,7 +506,7 @@ cdef class Tree:
         value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
                        self.capacity * self.value_stride * sizeof(double))
 
-    cdef int _resize(self, SIZE_t capacity) nogil except -1:
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
 
@@ -517,7 +520,7 @@ cdef class Tree:
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
-    cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -831,7 +834,7 @@ cdef class Tree:
                           double weighted_n_node_samples,
                           DTYPE_t* lower_bounds,
                           DTYPE_t* upper_bounds,
-                          double E) nogil except -1:
+                          double E) except -1 nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -1216,7 +1219,8 @@ cdef class Tree:
         cdef np.ndarray arr
         arr = np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        PyArray_SetBaseObject(arr,<PyObject*>self)
+        # arr.base = <PyObject*> self Depracated
         return arr
 
     cdef np.ndarray _get_node_ndarray(self):
@@ -1236,5 +1240,6 @@ cdef class Tree:
                                    strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        PyArray_SetBaseObject(arr,<PyObject*>self)
+        # arr.base = <PyObject*> self Depracated
         return arr
