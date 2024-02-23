@@ -12,7 +12,7 @@ URL = 'https://github.com/scikit-garden/scikit-garden'
 MAINTAINER = 'Manoj Kumar'
 MAINTAINER_EMAIL = 'mks542@nyu.edu'
 LICENSE = 'new BSD'
-VERSION = '0.1.3'
+VERSION = '0.1.4'
 
 libraries = []
 if os.name == 'posix':
@@ -41,9 +41,9 @@ class CustomBuildExtCommand(build_ext):
 
     def finalize_options(self):
         # Import Cython here, only when we need to cythonize extensions
-        if self.distribution.ext_modules:
-            from Cython.Build.Dependencies import cythonize
-            self.distribution.ext_modules[:] = cythonize(self.distribution.ext_modules, force=self.force)
+        # if self.distribution.ext_modules:
+        from Cython.Build.Dependencies import cythonize
+        self.distribution.ext_modules[:] = cythonize(self.distribution.ext_modules, force=self.force)
         super().finalize_options()
 
 
