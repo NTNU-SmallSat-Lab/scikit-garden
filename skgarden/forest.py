@@ -16,7 +16,6 @@ from sklearn.metrics import r2_score
 from sklearn.utils import check_random_state
 from sklearn.utils import check_array
 from sklearn.utils import compute_sample_weight
-from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import _check_sample_weight
@@ -187,19 +186,18 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-    criterion : string, optional (default="mse")
+    criterion : string, optional (default="squared_error")
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
+        are "squared_error" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
         absolute error.
 
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a percentage and
           `int(max_features * n_features)` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
@@ -311,9 +309,9 @@ class RandomForestRegressor(_sk_RandomForestRegressor):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, n_estimators=10, criterion='mse', max_depth=None,
+    def __init__(self, n_estimators=10, criterion='squared_error', max_depth=None,
                  min_samples_split=2, min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.0, max_features='auto',
+                 min_weight_fraction_leaf=0.0, max_features=None,
                  max_leaf_nodes=None, bootstrap=True, oob_score=False,
                  n_jobs=1, random_state=None, verbose=0, warm_start=False,
                  min_variance=0.0):
@@ -371,19 +369,18 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
     n_estimators : integer, optional (default=10)
         The number of trees in the forest.
 
-    criterion : string, optional (default="mse")
+    criterion : string, optional (default="squared_error")
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
+        are "squared_error" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
         absolute error.
 
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a percentage and
           `int(max_features * n_features)` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
@@ -495,9 +492,9 @@ class ExtraTreesRegressor(_sk_ExtraTreesRegressor):
     ----------
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
     """
-    def __init__(self, n_estimators=10, criterion='mse', max_depth=None,
+    def __init__(self, n_estimators=10, criterion='squared_error', max_depth=None,
                  min_samples_split=2, min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.0, max_features='auto',
+                 min_weight_fraction_leaf=0.0, max_features=None,
                  max_leaf_nodes=None, bootstrap=False, oob_score=False,
                  n_jobs=1, random_state=None, verbose=0, warm_start=False,
                  min_variance=0.0):
@@ -567,7 +564,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                  class_weight=None,
                  max_samples=None):
         super().__init__(
-            base_estimator=base_estimator,
+            estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
 
@@ -596,8 +593,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             return the index of the leaf x ends up in.
         """
         X = self._validate_X_predict(X)
-        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                           **_joblib_parallel_args(prefer="threads"))(
+        results = Parallel(n_jobs=self.n_jobs,
+                           verbose=self.verbose,
+                           prefer="threads")(
             delayed(tree.apply)(X, check_input=False)
             for tree in self.estimators_)
 
@@ -623,8 +621,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             gives the indicator value for the i-th estimator.
         """
         X = self._validate_X_predict(X)
-        indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                              **_joblib_parallel_args(prefer='threads'))(
+        indicators = Parallel(n_jobs=self.n_jobs,
+                              verbose=self.verbose,
+                              prefer='threads')(
             delayed(tree.decision_path)(X, check_input=False)
             for tree in self.estimators_)
 
@@ -739,8 +738,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # that case. However, for joblib 0.12+ we respect any
             # parallel_backend contexts set at a higher level,
             # since correctness does not rely on using threads.
-            trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                             **_joblib_parallel_args(prefer='threads'))(
+            trees = Parallel(n_jobs=self.n_jobs,
+                             verbose=self.verbose,
+                             prefer='threads')(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight,
@@ -791,7 +791,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         check_is_fitted(self)
 
         all_importances = Parallel(n_jobs=self.n_jobs,
-                                   **_joblib_parallel_args(prefer='threads'))(
+                                   prefer='threads')(
             delayed(getattr)(tree, 'feature_importances_')
             for tree in self.estimators_ if tree.tree_.node_count > 1)
 
@@ -1016,8 +1016,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
                      for j in np.atleast_1d(self.n_classes_)]
         lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                 **_joblib_parallel_args(require="sharedmem"))(
+        Parallel(n_jobs=n_jobs,
+                 verbose=self.verbose,
+                 require="sharedmem")(
             delayed(_accumulate_prediction)(e.predict_proba, X, all_proba,
                                             lock)
             for e in self.estimators_)
@@ -1122,7 +1123,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         # Parallel loop
         lock = threading.Lock()
         Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                 **_joblib_parallel_args(require="sharedmem"))(
+                 require="sharedmem")(
             delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
             for e in self.estimators_)
 
