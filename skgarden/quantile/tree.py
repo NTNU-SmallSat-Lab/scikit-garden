@@ -107,9 +107,9 @@ class DecisionTreeQuantileRegressor(DecisionTreeRegressor, BaseTreeQuantileRegre
 
     Parameters
     ----------
-    criterion : string, optional (default="mse")
+    criterion : string, optional (default="squared_error")
         The function to measure the quality of a split. Supported criteria
-        are "mse" for the mean squared error, which is equal to variance
+        are "squared_error" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
         absolute error.
         .. versionadded:: 0.18
@@ -126,7 +126,6 @@ class DecisionTreeQuantileRegressor(DecisionTreeRegressor, BaseTreeQuantileRegre
         - If float, then `max_features` is a percentage and
           `int(max_features * n_features)` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
@@ -225,13 +224,13 @@ class DecisionTreeQuantileRegressor(DecisionTreeRegressor, BaseTreeQuantileRegre
 
 class ExtraTreeQuantileRegressor(ExtraTreeRegressor, BaseTreeQuantileRegressor):
     def __init__(self,
-                 criterion='mse',
+                 criterion='squared_error',
                  splitter='random',
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
                  min_weight_fraction_leaf=0.0,
-                 max_features='auto',
+                 max_features=None,
                  random_state=None,
                  max_leaf_nodes=None):
         super(ExtraTreeQuantileRegressor, self).__init__(
